@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photobooth - Chụp Ảnh Online</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            width: 100%;
+            align-items: flex-start;
+        }
+
+        .photobooth-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            flex: 1;
+            max-width: 800px;
+        }
+
+        .photo-gallery-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 350px;
+            height: fit-content;
+        }
+
+        .camera-container {
+            position: relative;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            border-radius: 15px;
+            object-fit: cover;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: #f0f0f0;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            border-radius: 15px;
+            pointer-events: none;
+            border: 4px solid transparent;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+            background-size: 300% 300%;
+            animation: gradientShift 3s ease infinite;
+            z-index: 1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            transform: scale(1.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-capture {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-capture:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.6);
+        }
+
+        .btn-clear {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-clear:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.6);
+        }
+
+        .photo-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .gallery-header h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .photo-counter {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .photo-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            animation: slideInRight 0.5s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .photo-item .photo-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .photo-item:hover .photo-controls {
+            opacity: 1;
+        }
+
+        .photo-number {
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .download-btn {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 20px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            transition: background 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: white;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .countdown.show {
+            opacity: 1;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: #666;
+            font-weight: bold;
+            white-space: pre-line;
+            line-height: 1.4;
+        }
+
+        .status.error {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .status.success {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+        }
+
+        .quality-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .quality-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .quality-selector select {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .photo-gallery-container {
+                width: 100%;
+                max-width: 800px;
+            }
+            
+            .photo-gallery {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .photobooth-container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            #video {
+                height: 300px;
+            }
+            
+            .camera-overlay {
+                height: 300px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 Photobooth Online</h1>
+        <p>Chụp ảnh với chất lượng 4K Ultra HD!</p>
+    </div>
+
+    <div class="main-container">
+        <div class="photobooth-container">
+            <div class="status" id="status">
+                Đang kiểm tra camera...
+            </div>
+
+            <div class="quality-selector">
+                <label for="qualitySelect">Chất lượng ảnh:</label>
+                <select id="qualitySelect">
+                    <option value="4k">4K Ultra HD (3840x2160)</option>
+                    <option value="fullhd">Full HD (1920x1080)</option>
+                    <option value="hd">HD (1280x720)</option>
+                </select>
+            </div>
+
+            <div class="camera-container">
+                <video id="video" autoplay muted playsinline></video>
+                <div class="camera-overlay"></div>
+                <div class="countdown" id="countdown"></div>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="none">Bình thường</button>
+                <button class="filter-btn" data-filter="grayscale">Đen trắng</button>
+                <button class="filter-btn" data-filter="sepia">Sepia</button>
+                <button class="filter-btn" data-filter="blur">Mờ</button>
+                <button class="filter-btn" data-filter="brightness">Sáng</button>
+                <button class="filter-btn" data-filter="contrast">Tương phản</button>
+                <button class="filter-btn" data-filter="hue-rotate">Màu sắc</button>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-start" id="startBtn">Bắt đầu Camera</button>
+                <button class="btn btn-capture" id="captureBtn" disabled>Chụp ảnh (3s)</button>
+                <button class="btn btn-clear" id="clearBtn" disabled>Xóa tất cả</button>
+            </div>
+        </div>
+
+        <div class="photo-gallery-container">
+            <div class="gallery-header">
+                <h3>Thư viện ảnh</h3>
+                <div class="photo-counter" id="photoCounter">0/4 ảnh</div>
+            </div>
+            <div class="photo-gallery" id="photoGallery"></div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        class PhotoBooth {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.startBtn = document.getElementById('startBtn');
+                this.captureBtn = document.getElementById('captureBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.photoGallery = document.getElementById('photoGallery');
+                this.photoCounter = document.getElementById('photoCounter');
+                this.status = document.getElementById('status');
+                this.countdown = document.getElementById('countdown');
+                this.qualitySelect = document.getElementById('qualitySelect');
+                
+                this.stream = null;
+                this.currentFilter = 'none';
+                this.photos = [];
+                this.maxPhotos = 4;
+                
+                this.init();
+            }
+
+            init() {
+                this.startBtn.addEventListener('click', () => this.startCamera());
+                this.captureBtn.addEventListener('click', () => this.capturePhoto());
+                this.clearBtn.addEventListener('click', () => this.clearAllPhotos());
+                
+                // Filter buttons
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilter = e.target.dataset.filter;
+                        this.applyFilter();
+                    });
+                });
+
+                this.updatePhotoCounter();
+                
+                // Check camera availability on page load
+                this.checkCameraAvailability();
+            }
+
+            async checkCameraAvailability() {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        this.status.textContent = '❌ Trình duyệt không hỗ trợ camera. Vui lòng sử dụng Chrome, Firefox, hoặc Safari.';
+                        this.status.className = 'status error';
+                        return;
+                    }
+
+                    // Check if any camera devices exist
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                    
+                    if (videoDevices.length === 0) {
+                        this.status.textContent = '❌ Không tìm thấy camera nào. Vui lòng kết nối camera và thử lại.';
+                        this.status.className = 'status error';
+                        this.startBtn.disabled = true;
+                        return;
+                    }
+
+                    this.status.textContent = `✅ Tìm thấy ${videoDevices.length} camera. Nhấn "Bắt đầu Camera" để bắt đầu.`;
+                    this.status.className = 'status success';
+                    
+                } catch (error) {
+                    console.error('Lỗi khi kiểm tra camera:', error);
+                    this.status.textContent = '⚠️ Không thể kiểm tra camera. Vui lòng thử nhấn "Bắt đầu Camera".';
+                    this.status.className = 'status';
+                }
+            }
+
+            getQualityConstraints() {
+                const quality = this.qualitySelect.value;
+                
+                const constraints = {
+                    '4k': { width: { ideal: 3840, min: 1920 }, height: { ideal: 2160, min: 1080 } },
+                    'fullhd': { width: { ideal: 1920, min: 1280 }, height: { ideal: 1080, min: 720 } },
+                    'hd': { width: { ideal: 1280, min: 640 }, height: { ideal: 720, min: 480 } }
+                };
+
+                return constraints[quality] || constraints['fullhd'];
+            }
+
+            async startCamera() {
+                try {
+                    this.status.textContent = 'Đang kiểm tra camera...';
+                    this.status.className = 'status';
+                    
+                    // Check if getUserMedia is supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('Browser không hỗ trợ truy cập camera');
+                    }
+
+                    // Stop existing stream if any
+                    if (this.stream) {
+                        this.stream.getTracks().forEach(track => track.stop());
+                    }
+
+                    this.status.textContent = 'Đang yêu cầu quyền truy cập camera...';
+
+                    // Try multiple camera access methods with fallback
+                    let stream = null;
+                    
+                    // Method 1: Try with high quality constraints
+                    try {
+                        const videoConstraints = this.getQualityConstraints();
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                ...videoConstraints,
+                                facingMode: 'user'
+                            },
+                            audio: false
+                        });
+                    } catch (highQualityError) {
+                        console.log('High quality failed, trying medium quality...', highQualityError);
+                        
+                        // Method 2: Try with medium quality
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia({
+                                video: {
+                                    width: { ideal: 1280, min: 640 },
+                                    height: { ideal: 720, min: 480 },
+                                    facingMode: 'user'
+                                },
+                                audio: false
+                            });
+                        } catch (mediumQualityError) {
+                            console.log('Medium quality failed, trying basic...', mediumQualityError);
+                            
+                            // Method 3: Try with basic constraints
+                            try {
+                                stream = await navigator.mediaDevices.getUserMedia({
+                                    video: {
+                                        width: { ideal: 640 },
+                                        height: { ideal: 480 }
+                                    },
+                                    audio: false
+                                });
+                            } catch (basicError) {
+                                console.log('Basic quality failed, trying any camera...', basicError);
+                                
+                                // Method 4: Try with minimal constraints
+                                stream = await navigator.mediaDevices.getUserMedia({
+                                    video: true,
+                                    audio: false
+                                });
+                            }
+                        }
+                    }
+
+                    if (!stream) {
+                        throw new Error('Không thể khởi tạo camera stream');
+                    }
+
+                    this.stream = stream;
+                    this.status.textContent = 'Đang kết nối camera...';
+                    
+                    // Set video source
+                    this.video.srcObject = this.stream;
+                    
+                    // Wait for video to start playing
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Timeout khi tải camera'));
+                        }, 10000); // 10 second timeout
+
+                        this.video.addEventListener('loadedmetadata', () => {
+                            clearTimeout(timeout);
+                            console.log('Camera loaded:', this.video.videoWidth, 'x', this.video.videoHeight);
+                            resolve();
+                        }, { once: true });
+
+                        this.video.addEventListener('error', (e) => {
+                            clearTimeout(timeout);
+                            reject(new Error('Lỗi khi tải video: ' + e.message));
+                        }, { once: true });
+
+                        // Force play
+                        this.video.play().catch(playError => {
+                            console.log('Auto-play failed:', playError);
+                        });
+                    });
+
+                    // Set canvas dimensions
+                    this.canvas.width = this.video.videoWidth || 640;
+                    this.canvas.height = this.video.videoHeight || 480;
+
+                    this.startBtn.disabled = true;
+                    this.captureBtn.disabled = false;
+                    
+                    this.status.textContent = `✅ Camera đã sẵn sàng! Độ phân giải: ${this.video.videoWidth || 'Unknown'}x${this.video.videoHeight || 'Unknown'}`;
+                    this.status.className = 'status success';
+                    
+                } catch (error) {
+                    console.error('Lỗi khi truy cập camera:', error);
+                    let errorMessage = '❌ Không thể truy cập camera. ';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage += 'Vui lòng:\n1. Nhấn "Cho phép" khi trình duyệt hỏi\n2. Kiểm tra icon camera trên thanh địa chỉ\n3. Thử tải lại trang';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage += 'Không tìm thấy camera. Vui lòng:\n1. Kiểm tra camera có kết nối không\n2. Đóng các ứng dụng khác đang dùng camera\n3. Thử lại';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage += 'Camera đang được sử dụng. Vui lòng:\n1. Đóng các tab/ứng dụng khác\n2. Khởi động lại trình duyệt\n3. Thử lại';
+                    } else if (error.name === 'OverconstrainedError') {
+                        errorMessage += 'Camera không hỗ trợ chất lượng yêu cầu. Vui lòng chọn chất lượng thấp hơn.';
+                    } else {
+                        errorMessage += `Chi tiết lỗi: ${error.message}`;
+                    }
+                    
+                    this.status.textContent = errorMessage;
+                    this.status.className = 'status error';
+                    this.startBtn.disabled = false;
+                }
+            }
+
+            applyFilter() {
+                if (!this.stream) return;
+                
+                const filters = {
+                    none: 'none',
+                    grayscale: 'grayscale(100%)',
+                    sepia: 'sepia(100%)',
+                    blur: 'blur(2px)',
+                    brightness: 'brightness(150%)',
+                    contrast: 'contrast(150%)',
+                    'hue-rotate': 'hue-rotate(90deg)'
+                };
+                
+                this.video.style.filter = filters[this.currentFilter];
+            }
+
+            async capturePhoto() {
+                if (!this.stream || this.photos.length >= this.maxPhotos) return;
+                
+                // Countdown
+                await this.showCountdown();
+                
+                // Capture with high quality
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Use original video dimensions for maximum quality
+                canvas.width = this.video.videoWidth;
+                canvas.height = this.video.videoHeight;
+                
+                // Apply filter to canvas context
+                ctx.filter = this.video.style.filter;
+                ctx.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+                
+                // Export with maximum quality
+                const imageData = canvas.toDataURL('image/jpeg', 1.0);
+                
+                this.photos.push({
+                    data: imageData,
+                    timestamp: new Date().toLocaleString('vi-VN'),
+                    quality: this.qualitySelect.options[this.qualitySelect.selectedIndex].text,
+                    dimensions: `${canvas.width}x${canvas.height}`
+                });
+                
+                this.addPhotoToGallery(imageData, this.photos.length - 1);
+                this.updatePhotoCounter();
+                
+                // Flash effect
+                this.flashEffect();
+                
+                // Check if reached max photos
+                if (this.photos.length >= this.maxPhotos) {
+                    this.captureBtn.disabled = true;
+                    this.status.textContent = `Đã chụp tối đa ${this.maxPhotos} ảnh!`;
+                    this.status.className = 'status';
+                }
+            }
+
+            async showCountdown() {
+                const countdownEl = this.countdown;
+                
+                for (let i = 3; i >= 1; i--) {
+                    countdownEl.textContent = i;
+                    countdownEl.classList.add('show');
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    countdownEl.classList.remove('show');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                countdownEl.textContent = '📸';
+                countdownEl.classList.add('show');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                countdownEl.classList.remove('show');
+            }
+
+            flashEffect() {
+                const overlay = document.querySelector('.camera-overlay');
+                overlay.style.background = 'rgba(255, 255, 255, 0.8)';
+                overlay.style.animation = 'none';
+                
+                setTimeout(() => {
+                    overlay.style.background = 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3)';
+                    overlay.style.animation = 'gradientShift 3s ease infinite';
+                }, 200);
+            }
+
+            addPhotoToGallery(imageData, index) {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                
+                const photo = this.photos[index];
+                
+                photoItem.innerHTML = `
+                    <img src="${imageData}" alt="Photo ${index + 1}">
+                    <div class="photo-controls">
+                        <div class="photo-number">Ảnh ${index + 1} - ${photo.dimensions}</div>
+                        <button class="download-btn" onclick="photoBooth.downloadPhoto(${index})">
+                            Tải xuống
+                        </button>
+                    </div>
+                `;
+                
+                this.photoGallery.appendChild(photoItem);
+            }
+
+            downloadPhoto(index) {
+                const photo = this.photos[index];
+                const link = document.createElement('a');
+                link.download = `photobooth-${photo.dimensions}-${Date.now()}.jpg`;
+                link.href = photo.data;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            clearAllPhotos() {
+                if (confirm('Bạn có chắc chắn muốn xóa tất cả ảnh?')) {
+                    this.photos = [];
+                    this.photoGallery.innerHTML = '';
+                    this.updatePhotoCounter();
+                    this.captureBtn.disabled = false;
+                    this.clearBtn.disabled = true;
+                    this.status.textContent = 'Đã xóa tất cả ảnh!';
+                    this.status.className = 'status success';
+                }
+            }
+
+            updatePhotoCounter() {
+                this.photoCounter.textContent = `${this.photos.length}/${this.maxPhotos} ảnh`;
+                this.clearBtn.disabled = this.photos.length === 0;
+            }
+        }
+
+        // Initialize the photobooth
+        const photoBooth = new PhotoBooth();
+    </script>
+</body>
+</html>
